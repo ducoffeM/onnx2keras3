@@ -1,0 +1,5 @@
+
+BACKEND_TENSORFLOW = "tensorflow"
+BACKEND_PYTORCH = "torch"
+BACKEND_NUMPY = "numpy"
+BACKEND_JAX = "jax"
