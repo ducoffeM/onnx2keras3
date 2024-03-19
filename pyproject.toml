@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=68.2.2"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "onnx2keras3"
+description = "bla blas"
+readme = "README.md"
+authors = [
+    {email ="ai.decomon@gmail.com"},
+]
+requires-python = ">=3.9"
+dependencies =[
+    "numpy >=1.21",
+    "keras>=3",
+    "onnx"
+]
+dynamic = ["version"]
+
+[project.urls]
+documentation = "https://ducoffeM.github.io/onnx2keras3"
+repository = "https://github.com/ducoffeM/onnx2keras3"
+
+[project.optional-dependencies]
+dev = ["tox>=4.6.4"]
+
+[tool.setuptools.packages.find]
+where = ["onnx2keras3"]
+
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--import-mode=importlib"
+]
+
+[tool.black]
+line-length = 120
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | tests/.*/setup.py
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
+
+[tool.mypy]
+files = "onnx2keras3"
+strict_optional = true
+implicit_optional = false
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "keras.*",
+]
+ignore_missing_imports = true
