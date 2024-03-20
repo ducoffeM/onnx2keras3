@@ -128,7 +128,7 @@ class Max(Layer):
 class Split(Layer):
     def __init__(self, splits, axis, **kwargs):
         super(Split, self).__init__(**kwargs)
-        self.splits = splits
+        self.splits = list(splits)
         # self.i = i
         self.axis = axis
 
