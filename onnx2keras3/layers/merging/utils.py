@@ -18,7 +18,7 @@ class PlusConstant(keras.layers.Layer):
                  - If minus equals -1, it computes (x + constant).
         """
         super(PlusConstant, self).__init__(**kwargs)
-        self.constant: Union[float, ArrayLike] = constant
+        self.constant: Union[float, Tensor] = keras.ops.convert_to_tensor(constant)
         self.sign: int = 1
         if minus:
             self.sign = -1
@@ -48,7 +48,10 @@ class MulConstant(keras.layers.Layer):
             constant: The constant value to be elementwise multiplied with the tensor.
         """
         super(MulConstant, self).__init__(**kwargs)
-        self.constant: Union[float, ArrayLike] = constant
+        if len(constant.shape):
+            self.constant: Union[float, Tensor] = keras.ops.convert_to_tensor(constant)
+        else:
+            self.constant: Union[float, Tensor] = constant
 
     def call(self, inputs_):
         return self.constant * inputs_
@@ -79,7 +82,11 @@ class DivConstant(keras.layers.Layer):
             constant: The constant value to be elementwise multiplied with the tensor.
         """
         super(DivConstant, self).__init__(**kwargs)
-        self.constant: Union[float, ArrayLike] = constant
+
+        if len(constant.shape):
+            self.constant: Union[float, Tensor] = keras.ops.convert_to_tensor(constant)
+        else:
+            self.constant: Union[float, Tensor] = constant
 
     def call(self, inputs_):
         return self.constant / inputs_
