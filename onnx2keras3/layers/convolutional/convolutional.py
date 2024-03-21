@@ -3,7 +3,7 @@ import keras.backend as K
 import logging
 from onnx2keras3.layers.utils import ensure_tf_type, ensure_numpy_type
 from typing import List, Dict, Any, Union
-from onnx2keras3.typing import Tensor, Node, WeightsOnnx, DataFormat, ArrayLike, Padding, Layer
+from onnx2keras3.typing import Tensor, Node, WeightsOnnx, DataFormat, ArrayLike, Padding, Layer, Constant
 
 
 def convert_conv(
@@ -80,6 +80,11 @@ def convert_conv(
         out_channels, channels_per_group, dimension, height, width = W.shape
         W = W.transpose(2, 3, 4, 1, 0)
 
+        bias_initializer: Union[str, Constant] = "zeros"
+        if has_bias:
+            bias_initializer = keras.initializers.Constant(bias)
+        kernel_initializer: Constant = keras.initializers.Constant(W)
+
         conv: Layer = keras.layers.Conv3D(
             filters=out_channels,
             kernel_size=(dimension, height, width),
@@ -88,15 +93,11 @@ def convert_conv(
             use_bias=has_bias,
             activation=None,
             dilation_rate=dilation,
-            bias_initializer="zeros",
-            kernel_initializer="zeros",
+            bias_initializer=bias_initializer,
+            kernel_initializer=kernel_initializer,
             name=keras_name,
             groups=n_groups,
         )
-        conv.kernel = W
-        if has_bias:
-            conv.bias = bias
-        conv.built = True
         output: Tensor = conv(input_0)
 
     elif len(W.shape) == 4:  # 2D conv
@@ -119,6 +120,11 @@ def convert_conv(
             logger.debug("Number of groups is equal to input channels, use DepthWise convolution")
             W = W.transpose(0, 1, 3, 2)
 
+            bias_initializer: Union[str, Constant] = "zeros"
+            if has_bias:
+                bias_initializer = keras.initializers.Constant(bias)
+            kernel_initializer: Constant = keras.initializers.Constant(W)
+
             conv = keras.layers.DepthwiseConv2D(
                 kernel_size=(height, width),
                 strides=(strides[0], strides[1]),
@@ -128,15 +134,12 @@ def convert_conv(
                 depth_multiplier=1,
                 weights=weights,
                 dilation_rate=dilation,
-                bias_initializer="zeros",
-                kernel_initializer="zeros",
+                bias_initializer=bias_initializer,
+                kernel_initializer=kernel_initializer,
                 name=keras_name,
                 data_format=data_format_keras,
             )
-            conv.kernel = W
-            if has_bias:
-                conv.bias = bias
-            conv.built = True
+
             output = conv(input_0)
 
         elif n_groups != 1:
@@ -145,6 +148,11 @@ def convert_conv(
             raise NotImplementedError()
 
         else:
+            bias_initializer: Union[str, Constant] = "zeros"
+            if has_bias:
+                bias_initializer = keras.initializers.Constant(bias)
+            kernel_initializer: Constant = keras.initializers.Constant(W)
+
             conv = keras.layers.Conv2D(
                 filters=out_channels,
                 kernel_size=(height, width),
@@ -153,15 +161,12 @@ def convert_conv(
                 use_bias=has_bias,
                 activation=None,
                 dilation_rate=dilation,
-                bias_initializer="zeros",
-                kernel_initializer="zeros",
+                bias_initializer=bias_initializer,
+                kernel_initializer=kernel_initializer,
                 name=keras_name,
                 data_format=data_format_keras,
             )
-            conv.kernel = W
-            if has_bias:
-                conv.bias = bias
-            conv.built = True
+
             output = conv(input_0)
             return output
     else:
@@ -171,6 +176,10 @@ def convert_conv(
         if pads[0] > 0:
             padding_value = "same"
 
+        bias_initializer: Union[str, Constant] = "zeros"
+        if has_bias:
+            bias_initializer = keras.initializers.Constant(bias)
+        kernel_initializer: Constant = keras.initializers.Constant(W)
         conv = keras.layers.Conv1D(
             filters=n_filters,
             kernel_size=width,
@@ -179,6 +188,8 @@ def convert_conv(
             use_bias=has_bias,
             data_format=data_format_keras,
             dilation_rate=dilation,
+            bias_initializer=bias_initializer,
+            kernel_initializer=kernel_initializer,
             name=keras_name,
         )
 
@@ -259,6 +270,11 @@ def convert_convtranspose(
         if dilation > 1:
             raise AttributeError("Cannot convert ConvTranspose2d with dilation_rate != 1")
 
+        bias_initializer: Union[str, Constant] = "zeros"
+        if has_bias:
+            bias_initializer = keras.initializers.Constant(bias)
+        kernel_initializer: Constant = keras.initializers.Constant(W)
+
         conv = keras.layers.Conv2DTranspose(
             filters=n_filters,
             kernel_size=(height, width),
@@ -267,15 +283,11 @@ def convert_convtranspose(
             use_bias=has_bias,
             activation=None,
             dilation_rate=dilation,
-            bias_initializer="zeros",
-            kernel_initializer="zeros",
+            bias_initializer=bias_initializer,
+            kernel_initializer=kernel_initializer,
             name=keras_name,
             data_format=data_format_keras,
         )
-        conv.kernel = W
-        if has_bias:
-            conv.bias = bias
-        conv.built = True
 
         if "output_shape" in params and "pads" not in params:
             logger.debug("!!!!! Paddings will be calculated automatically !!!!!")
