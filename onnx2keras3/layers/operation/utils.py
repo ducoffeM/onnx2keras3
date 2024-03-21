@@ -162,9 +162,9 @@ class Identity(Layer):
     def get_config(self):
         return super().get_config()
 
-    def compute_output_spec(self, *args, **kwargs):
+    def compute_output_shape(self, input_shape):
 
-        return args[0]
+        return input_shape
 
 
 class Cast(Layer):
@@ -191,9 +191,9 @@ class Cast(Layer):
         config.update({"dtype": self.dtype, "cast_map": self.cast_map})
         return config
 
-    def compute_output_spec(self, *args, **kwargs):
+    def compute_output_shape(self, input_shape):
 
-        return args[0]
+        return input_shape
 
 
 class Floor(Layer):
@@ -201,9 +201,9 @@ class Floor(Layer):
     def call(self, inputs_):
         return keras.ops.floor(inputs_)
 
-    def compute_output_spec(self, *args, **kwargs):
+    def compute_output_shape(self, input_shape):
 
-        return args[0]
+        return input_shape
 
 
 class Argmax(Layer):
