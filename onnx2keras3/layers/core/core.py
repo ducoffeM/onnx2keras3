@@ -72,15 +72,18 @@ def convert_gemm(
     logger.debug("Input units %s, output units %s.", input_channels, output_channels)
 
     if is_numpy(W):
-        dense = keras.layers.Dense(
-            output_channels, name=keras_name, bias_initializer="zeros", kernel_initializer="zeros", use_bias=has_bias
-        )
-
+        bias_initializer: Union[str, Constant] = "zeros"
         if has_bias:
-            dense.weights = [W, bias]
-        else:
-            dense.weights = [W]
-        dense.built = True
+            bias_initializer = keras.initializers.Constant(bias)
+
+        kernel_initializer = keras.initializers.Constant(W)
+        dense = keras.layers.Dense(
+            output_channels,
+            name=keras_name,
+            bias_initializer=bias_initializer,
+            kernel_initializer=kernel_initializer,
+            use_bias=has_bias,
+        )
 
         # The first input - always X
         try:
