@@ -262,7 +262,7 @@ def convert_flatten(node:Node, inputs:List[Tensor], weights:List[ArrayLike], par
     logger.debug('Convert inputs to Keras/TF layers if needed.')
     input_0 = inputs[0]
 
-    if params['change_ordering']:
+    if 'change_ordering' in params and params['change_ordering']:
         lambda_layer:Layer = keras.layers.Permute([0, 3, 1, 2], name="%s_CHW" % keras_name)
         tensor_chw = lambda_layer(input_0)
         flatten = keras.layers.Flatten(name=keras_name)
@@ -290,6 +290,8 @@ def convert_squeeze(node:Node, inputs:List[Tensor], weights:List[ArrayLike], par
         Tensor: The output tensor/s after applying the equivalent Keras layer to the inputs of the ONNX node.
     """
     logger = logging.getLogger('onnx2keras.squeeze')
+
+    import pdb; pdb.set_trace()
     if len(node.input) != 1:
         assert AttributeError('More than 1 input for squeeze layer.')
 

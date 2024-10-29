@@ -443,6 +443,8 @@ def convert_identity(
     if len(node.input) != 1:
         assert AttributeError("More than 1 input for itentity layer.")
 
+    if len(weights):
+        return keras.Variable(weights[0], name=node.input[0].split('.')[1])
     return inputs[0]
 
 

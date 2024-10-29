@@ -52,4 +52,4 @@ from onnx2keras3.layers.reshaping import (
     convert_expand,
     convert_upsample,
 )
-from onnx2keras3.layers.preprocessing import convert_resize
+#from onnx2keras3.layers.preprocessing import convert_resize

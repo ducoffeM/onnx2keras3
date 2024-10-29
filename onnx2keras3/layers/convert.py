@@ -62,7 +62,7 @@ default_mapping_onnx2keras_classes = {
     "Upsample": convert_upsample,
     "Slice": convert_slice,
     "Cast": convert_cast,
-    "Resize": convert_resize,
+    #"Resize": convert_resize,
 }
 
 

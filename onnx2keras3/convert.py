@@ -93,7 +93,6 @@ def iter_node(
                 # we can convert current node to its Keras version and compute its output
                 # TO DO: KERAS CONVERTER of current node
                 convert_2_layer: Converter = get_layer(current_node.op_type)
-
                 # (node, inputs, weights, params, node_name, keras_name)
                 # retrieve weights
                 weights: List[ArrayLike] = [
@@ -111,15 +110,7 @@ def iter_node(
                 if not max([input_ is None for input_ in input_tensors]):
                     keras_name: str = get_layer_name(current_node)
                     try:
-                        output_tensor = convert_2_layer(
-                            current_node,
-                            input_tensors,
-                            weights,
-                            params_node,
-                            keras_name,
-                            data_format_onnx,
-                            data_format_keras,
-                        )
+                        output_tensor = convert_2_layer(current_node, input_tensors, weights, params_node, keras_name,data_format_onnx,data_format_keras)
                     except TypeError:
                         import pdb
 
@@ -175,6 +166,7 @@ def onnx_to_keras(filename: str) -> KerasModel:
     onnx_weights: List[WeightsOnnx] = [elem for elem in onnx_model.graph.initializer]
     # model's inputs
     onnx_inputs: List[Node] = [elem for elem in onnx_model.graph.input]
+
     # model's output
     onnx_outputs: List[Node] = [elem for elem in onnx_model.graph.output]
     # nodes of the onnx graph
@@ -190,11 +182,14 @@ def onnx_to_keras(filename: str) -> KerasModel:
     constant_nodes_names: List[str] = [get_id(e) for e in constant_nodes]
     onnx_nodes = [n for n in onnx_nodes if get_id(n) not in constant_nodes_names]
 
+
     dico_input_tensor: Dict[str, List[Tensor]] = {}
     for onnx_input, input_name in zip(onnx_inputs, onnx_input_names):
         input_shape: List[int] = [i.dim_value for i in onnx_input.type.tensor_type.shape.dim][1:]
+        print('Input creation', input_name)
         input_i: Tensor = Input(shape=input_shape, name=input_name)
         dico_input_tensor[get_id(onnx_input)] = [input_i]
+        break
 
     # add constant tensors
     for constant_node in constant_nodes:
@@ -203,6 +198,7 @@ def onnx_to_keras(filename: str) -> KerasModel:
         if not isinstance(values, list):
             values = [values]
         dico_input_tensor[get_id(constant_node)] = values
+    
 
     # init current_nodes
     is_next_node: List[bool] = [
@@ -219,8 +215,10 @@ def onnx_to_keras(filename: str) -> KerasModel:
 
     # retrieve inputs
     model_inputs: List[Tensor] = []
+        
     for onnx_input in onnx_inputs:
-        model_inputs += dico_input_tensor[get_id(onnx_input)]
+        if get_id(onnx_input) in dico_input_tensor.keys():
+            model_inputs += dico_input_tensor[get_id(onnx_input)]
 
     model_outputs: List[Tensor] = []
     for onnx_output in onnx_outputs:

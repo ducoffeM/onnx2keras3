@@ -34,6 +34,22 @@ def convert_maxpool(
     kernel_shape: ArrayLike = params["kernel_shape"]
     stride_shape: ArrayLike = params["strides"]
 
+    if "auto_pad" in params:
+
+        
+        pad = params["auto_pad"].decode('latin1').lower().split('_')[0]
+        if len(kernel_shape)==2:
+            pooling: Layer = keras.layers.MaxPooling2D(pool_size=kernel_shape, strides=stride_shape, padding=pad, name=keras_name, data_format=data_format_keras)  
+        else:
+            pooling: Layer = keras.layers.MaxPooling3D(pool_size=kernel_shape, strides=stride_shape, padding=pad, name=keras_name, data_format=data_format_keras)  
+
+            #input_0 = padding_layer(input_0)
+        output: Tensor = pooling(input_0)
+
+        return output   
+    
+
+
     pads: ArrayLike = params["pads"] if "pads" in params else [0, 0, 0, 0, 0, 0]
     pad: Padding = "valid"
 
@@ -46,6 +62,7 @@ def convert_maxpool(
         logger.debug("Use `same` padding parameters.")
     else:
         logger.warning("Unable to use `same` padding. Add ZeroPadding2D layer to fix shapes.")
+        import pdb; pdb.set_trace()
         padding_name = keras_name + "_pad"
         if len(kernel_shape) == 2:
             padding = None

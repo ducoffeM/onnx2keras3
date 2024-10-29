@@ -29,7 +29,7 @@ def convert_conv(
     Returns:
         Tensor: The output tensor/s after applying the equivalent Keras layer to the inputs of the ONNX node.
     """
-    logger = logging.getLogger("onnx2keras.conv")
+    logger = logging.getLogger("onnx2keras3.conv")
     W: ArrayLike
     bias: Union[None, ArrayLike]
     has_bias: bool
@@ -61,11 +61,13 @@ def convert_conv(
     pads: Any = params["pads"] if "pads" in params else [0, 0, 0]
     strides: Any = params["strides"] if "strides" in params else [1, 1, 1]
     padding_value: Padding = "valid"
+    if "auto_pad" in params:
+        padding_value:Padding = params["auto_pad"].decode('latin1').lower().split('_')[0]
+    
     output: Tensor
 
     if len(W.shape) == 5:  # 3D conv
         logger.debug("3D convolution")
-        padding_value: Padding = "valid"
         if pads[0] > 0 or pads[1] > 0 or pads[2] > 0:
 
             padding_value = "same"
@@ -89,7 +91,7 @@ def convert_conv(
             filters=out_channels,
             kernel_size=(dimension, height, width),
             strides=(strides[0], strides[1], strides[2]),
-            padding=padding_value,
+            padding='valid',
             use_bias=has_bias,
             activation=None,
             dilation_rate=dilation,
@@ -98,11 +100,19 @@ def convert_conv(
             name=keras_name,
             groups=n_groups,
         )
+
+        if padding_value=='same' and (min(dimension, height, width)>1 or max(strides[0], strides[1], strides[2])>1):
+                # require an extra step with ZeroPadding, necessary because of pytorch backend with same which does not encode the same semantic as keras
+
+                padding_layer = keras.layers.ZeroPadding3D(padding=(1, 1, 1))
+                input_0 = padding_layer(input_0)
+
+
         output: Tensor = conv(input_0)
 
     elif len(W.shape) == 4:  # 2D conv
         logger.debug("2D convolution")
-        padding_value: Padding = "valid"
+
 
         if len(pads) == 2 and (pads[0] > 0 or pads[1] > 0):
             # padding = (pads[0], pads[1])
@@ -128,7 +138,7 @@ def convert_conv(
             conv = keras.layers.DepthwiseConv2D(
                 kernel_size=(height, width),
                 strides=(strides[0], strides[1]),
-                padding=padding_value,
+                padding='valid',
                 use_bias=has_bias,
                 activation=None,
                 depth_multiplier=1,
@@ -152,22 +162,33 @@ def convert_conv(
             if has_bias:
                 bias_initializer = keras.initializers.Constant(bias)
             kernel_initializer: Constant = keras.initializers.Constant(W)
-
+            
             conv = keras.layers.Conv2D(
                 filters=out_channels,
                 kernel_size=(height, width),
                 strides=(strides[0], strides[1]),
-                padding=padding_value,
+                padding='valid',
                 use_bias=has_bias,
                 activation=None,
                 dilation_rate=dilation,
                 bias_initializer=bias_initializer,
                 kernel_initializer=kernel_initializer,
                 name=keras_name,
-                data_format=data_format_keras,
+                data_format=data_format_keras
             )
 
-            output = conv(input_0)
+            if padding_value=='same' and (min(height, width)>1 or max(strides[0], strides[1])>1):
+                # require an extra step with ZeroPadding, necessary because of pytorch backend with same which does not encode the same semantic as keras
+
+                #padding_layer = keras.layers.ZeroPadding2D(padding=(min(height-1, 1), min(width-1, 1)))
+                padding_layer = keras.layers.ZeroPadding2D(padding=(1, 1))
+                # check size ...
+                input_0_ = padding_layer(input_0)
+
+                output = conv(input_0_)
+            else:
+                output = conv(input_0)
+
             return output
     else:
         # 1D conv
@@ -184,7 +205,7 @@ def convert_conv(
             filters=n_filters,
             kernel_size=width,
             strides=strides[0],
-            padding=padding_value,
+            padding='valid',
             use_bias=has_bias,
             data_format=data_format_keras,
             dilation_rate=dilation,
@@ -192,6 +213,13 @@ def convert_conv(
             kernel_initializer=kernel_initializer,
             name=keras_name,
         )
+        if padding_value=='same' and (width>1 or strides[0]>1):
+                # require an extra step with ZeroPadding, necessary because of pytorch backend with same which does not encode the same semantic as keras
+
+                #padding_layer = keras.layers.ZeroPadding2D(padding=(min(height-1, 1), min(width-1, 1)))
+                padding_layer = keras.layers.ZeroPadding1D(padding=1)
+                input_0 = padding_layer(input_0)
+
 
         output = conv(input_0)
 

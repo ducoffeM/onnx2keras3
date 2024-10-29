@@ -109,7 +109,7 @@ def convert_lrelu(
     if len(params) == 0 or params["alpha"] == 1.0:
         lrelu = keras.layers.Activation("leaky_relu", name=keras_name)
     else:
-        lrelu = keras.layers.LeakyReLU(alpha=params["alpha"], name=keras_name)
+        lrelu = keras.layers.LeakyReLU(negative_slope=params["alpha"], name=keras_name)
 
     return lrelu(inputs[0])
 

@@ -4,9 +4,11 @@ from keras.layers import Multiply, Lambda
 import logging
 from onnx2keras3.layers.utils import is_numpy, ensure_tf_type
 import numpy as np
-from onnx2keras.layers.merging.utils import PlusConstant, MulConstant, DivConstant
+#from onnx2keras3.layers.merging.utils import PlusConstant, MulConstant, DivConstant
 from typing import List, Dict, Any, Union
 from onnx2keras3.typing import Tensor, Node, WeightsOnnx, DataFormat, ArrayLike, Padding, Layer
+
+from keras_custom.layers import PlusConstant, MulConstant, DivConstant
 
 
 def convert_conv(
@@ -107,6 +109,8 @@ def convert_elementwise_add(
     output: Tensor
     input_0: Tensor = inputs[0]
     input_1: Tensor = inputs[1]
+
+    return input_1 # temporary fix
 
     if K.is_keras_tensor(input_0) and K.is_keras_tensor(input_1):
         output = keras.layers.Add()(inputs)
