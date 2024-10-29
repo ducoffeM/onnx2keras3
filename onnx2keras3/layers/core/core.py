@@ -3,6 +3,7 @@ import logging
 from onnx2keras3.layers.utils import is_numpy
 from typing import List, Dict, Any, Union
 from onnx2keras3.typing import Tensor, Node, WeightsOnnx, DataFormat, ArrayLike, Padding, Layer
+from .utils import ensure_numpy_type
 
 
 def convert_gemm(
@@ -45,8 +46,12 @@ def convert_gemm(
     if len(weights) == 2:
         logger.debug("Conv with bias")
         has_bias = True
-        W = ensure_numpy_type(weights[0])
-        bias = ensure_numpy_type(weights[1])
+        if len(weights[0].shape)<len(weights[1].shape):
+            W = ensure_numpy_type(weights[1])
+            bias = ensure_numpy_type(weights[0])
+        else:
+            W = ensure_numpy_type(weights[0])
+            bias = ensure_numpy_type(weights[1])
         logger.debug("Convert GEMM with bias.")
     elif len(weights) == 1:
         logger.debug("Conv without bias")
